@@ -58,22 +58,22 @@ public class HAM {
     public static boolean mix(InMemoryGraph change, StorageBackend data, Map<String, NodeChangeListener> changeListeners, Map<String, NodeChangeListener.ForEach> forEachListeners) {
         long machine = System.currentTimeMillis();
         InMemoryGraph diff = null;
-        for(Map.Entry<String, Node> entry : change.entries()) {
-            Node node = entry.getValue();
+        for(Map.Entry<String, GunGraphNode> entry : change.entries()) {
+            GunGraphNode node = entry.getValue();
             for(String key : node.values.keySet()) {
                 Object value = node.values.get(key);
                 if ("_".equals(key)) { continue; }
-                long state = node.states.getLong(key);
+                long state = node.states.get(key);
                 long was = -1;
                 Object known = null;
                 if(data == null) {
                     data = new InMemoryGraph();
                 }
                 if(data.hasNode(node.soul)) {
-                    if(data.getNode(node.soul).states.opt(key) != null) {
-                        was = data.getNode(node.soul).states.getLong(key);
+                    if(data.getNode(node.soul).states.get(key) != null) {
+                        was = data.getNode(node.soul).states.get(key);
                     }
-                    known = data.getNode(node.soul).values.opt(key) == null ? 0 : data.getNode(node.soul).values.opt(key);
+                    known = data.getNode(node.soul).values.get(key) == null ? 0 : data.getNode(node.soul).values.get(key);
                 }
                 HAMResult ham = null;
                 try {
@@ -106,7 +106,7 @@ public class HAM {
                     data.addNode(node.soul, Utils.newNode(node.soul, new JSONObject()));
                 }
 
-                Node tmp = data.getNode(node.soul);
+                GunGraphNode tmp = data.getNode(node.soul);
                 tmp.values.put(key, value);
                 tmp.states.put(key, state);
                 data.addNode(node.soul, tmp);
@@ -115,41 +115,42 @@ public class HAM {
             }
         }
         if(diff != null) {
-            for(Map.Entry<String, Node> entry : diff.entries()) {
+            for(Map.Entry<String, GunGraphNode> entry : diff.entries()) {
                 if(changeListeners.containsKey(entry.getKey())) {
-                    changeListeners.get(entry.getKey()).onChange(entry.getValue().toUserJSONObject());
+                    //changeListeners.get(entry.getKey()).onChange(entry.getValue().toUserJSONObject()); // TODO
                 }
                 if(forEachListeners.containsKey(entry.getKey())) {
-                    for(Map.Entry<String, Object> jsonEntry : entry.getValue().values.toMap().entrySet()) {
+                    /*for(Map.Entry<String, Object> jsonEntry : entry.getValue().values.toMap().entrySet()) {
                         forEachListeners.get(entry.getKey()).onChange(jsonEntry.getKey(), jsonEntry.getValue());
-                    }
+                    }*/ // TODO
                 }
             }
         }
         return true;
     }
 
-    public static boolean mix(Node incomingNode, StorageBackend data, Map<String, NodeChangeListener> changeListeners, Map<String, NodeChangeListener.ForEach> forEachListeners) {
+    public static boolean mix(GunGraphNode incomingNode, StorageBackend data, Map<String, NodeChangeListener> changeListeners, Map<String, NodeChangeListener.ForEach> forEachListeners) {
         long machine = System.currentTimeMillis();
         InMemoryGraph diff = null;
 
         for(String key : incomingNode.values.keySet()) {
             Object value = incomingNode.values.get(key);
             if ("_".equals(key)) { continue; }
-            long state = incomingNode.states.getLong(key);
+            //long state = incomingNode.states.getLong(key); // TODO
             long was = -1;
             Object known = null;
             if(data == null) {
                 data = new InMemoryGraph();
             }
             if(data.hasNode(incomingNode.soul)) {
-                if(data.getNode(incomingNode.soul).states.opt(key) != null) {
+                /*if(data.getNode(incomingNode.soul).states.opt(key) != null) {
                     was = data.getNode(incomingNode.soul).states.getLong(key);
                 }
-                known = data.getNode(incomingNode.soul).values.opt(key) == null ? 0 : data.getNode(incomingNode.soul).values.opt(key);
+                known = data.getNode(incomingNode.soul).values.opt(key) == null ? 0 : data.getNode(incomingNode.soul).values.opt(key);*/
+                // TODO
             }
 
-            HAMResult ham = ham(machine, state, was, value, known);
+            /*HAMResult ham = ham(machine, state, was, value, known);
             if(!ham.incoming) {
                 if(ham.defer) {
                     System.out.println("DEFER: " + key + " " + value);
@@ -158,7 +159,7 @@ public class HAM {
                     Utils.setTimeout(() -> mix(incomingNode, graph[0], changeListeners, forEachListeners), (int) (state - machine));
                 }
                 continue;
-            }
+            }*/ // TODO
 
             if(diff == null) {
                 diff = new InMemoryGraph();
@@ -172,22 +173,22 @@ public class HAM {
                 data.addNode(incomingNode.soul, Utils.newNode(incomingNode.soul, new JSONObject()));
             }
 
-            Node tmp = data.getNode(incomingNode.soul);
+            GunGraphNode tmp = data.getNode(incomingNode.soul);
             tmp.values.put(key, value);
-            tmp.states.put(key, state);
+            //tmp.states.put(key, state); // TODO
             data.addNode(incomingNode.soul, tmp);
             diff.getNode(incomingNode.soul).values.put(key, value);
-            diff.getNode(incomingNode.soul).states.put(key, state);
+            //diff.getNode(incomingNode.soul).states.put(key, state); // TODO
         }
         if(diff != null) {
-            for(Map.Entry<String, Node> entry : diff.entries()) {
+            for(Map.Entry<String, GunGraphNode> entry : diff.entries()) {
                 if(changeListeners.containsKey(entry.getKey())) {
-                    changeListeners.get(entry.getKey()).onChange(entry.getValue().toUserJSONObject());
+                    //changeListeners.get(entry.getKey()).onChange(entry.getValue().toUserJSONObject()); // TODO
                 }
                 if(forEachListeners.containsKey(entry.getKey())) {
-                    for(Map.Entry<String, Object> jsonEntry : entry.getValue().values.toMap().entrySet()) {
+                    /*for(Map.Entry<String, Object> jsonEntry : entry.getValue().values.toMap().entrySet()) {
                         forEachListeners.get(entry.getKey()).onChange(jsonEntry.getKey(), jsonEntry.getValue());
-                    }
+                    }*/ // TODO
                 }
             }
         }

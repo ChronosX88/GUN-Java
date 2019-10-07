@@ -1,11 +1,12 @@
 package io.github.chronosx88.JGUN;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-import io.github.chronosx88.JGUN.storageBackends.InMemoryGraph;
-import org.json.JSONObject;
 
 import java.io.Serializable;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class GunGraphNode implements Comparable<GunGraphNode>, Serializable {
@@ -15,9 +16,25 @@ public class GunGraphNode implements Comparable<GunGraphNode>, Serializable {
 
     @SerializedName("#")
     @Expose(serialize = false)
-    public transient String soul; // i.e. ID of node
+    public String soul; // i.e. ID of node
 
     public Map<String, Object> values; // Data
+
+    public GunGraphNode() {}
+
+    public GunGraphNode(JsonObject jsonObject) {
+        soul = jsonObject.getAsJsonObject("_").get("#").getAsString();
+        states = new LinkedHashMap<>();
+        for(Map.Entry<String, JsonElement> entry : jsonObject.getAsJsonObject("_").get(">").getAsJsonObject().entrySet()) {
+            states.put(entry.getKey(), entry.getValue().getAsLong());
+        }
+    }
+
+    public GunGraphNode(Map<String, Long> states, String soul, Map<String, Object> values) {
+        this.states = states;
+        this.soul = soul;
+        this.values = values;
+    }
 
     @Override
     public int compareTo(GunGraphNode other) {

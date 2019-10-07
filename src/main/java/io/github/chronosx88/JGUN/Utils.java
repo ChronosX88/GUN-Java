@@ -23,19 +23,19 @@ public class Utils {
         return thread;
     }
 
-    public static Node newNode(String soul, JSONObject data) {
+    public static GunGraphNode newNode(String soul, JSONObject data) {
         JSONObject states = new JSONObject();
         for (String key : data.keySet()) {
             states.put(key, System.currentTimeMillis());
         }
         data.put("_", new JSONObject().put("#", soul).put(">", states));
-        return new Node(data);
+        return new GunGraphNode(data);
     }
 
     public static InMemoryGraph getRequest(JSONObject lex, StorageBackend graph) {
         String soul = lex.getString("#");
         String key = lex.optString(".", null);
-        Node node = graph.getNode(soul);
+        GunGraphNode node = graph.getNode(soul);
         Object tmp;
         if(node == null) {
             return new InMemoryGraph();
@@ -45,7 +45,7 @@ public class Utils {
             if(tmp == null) {
                 return new InMemoryGraph();
             }
-            Node node1 = new Node(node.toJSONObject());
+            GunGraphNode node1 = new GunGraphNode(node.toJSONObject());
             node = Utils.newNode(node.soul, new JSONObject());
             node.setMetadata(node1.getMetadata());
             node.values.put(key, tmp);
@@ -62,7 +62,7 @@ public class Utils {
         for (String objectKey : data.keySet()) {
             Object object = data.get(objectKey);
             if(object instanceof JSONObject) {
-                Node node = Utils.newNode(objectKey, (JSONObject) object);
+                GunGraphNode node = Utils.newNode(objectKey, (JSONObject) object);
                 ArrayList<String> path = new ArrayList<>();
                 path.add(objectKey);
                 prepareNodeForPut(node, result, path);
@@ -71,14 +71,14 @@ public class Utils {
         return result;
     }
 
-    private static void prepareNodeForPut(Node node, InMemoryGraph result, ArrayList<String> path) {
+    private static void prepareNodeForPut(GunGraphNode node, InMemoryGraph result, ArrayList<String> path) {
         for(String key : new ConcurrentSkipListSet<>(node.values.keySet())) {
             Object value = node.values.get(key);
             if(value instanceof JSONObject) {
                 path.add(key);
                 String soul = "";
                 soul = Utils.join("/", path);
-                Node tmpNode = Utils.newNode(soul, (JSONObject) value);
+                GunGraphNode tmpNode = Utils.newNode(soul, (JSONObject) value);
                 node.values.remove(key);
                 node.values.put(key, new JSONObject().put("#", soul));
                 prepareNodeForPut(tmpNode, result, new ArrayList<>(path));
@@ -116,7 +116,7 @@ public class Utils {
      * @return Prepared graph for saving
      */
     /*public static InMemoryGraph checkIncomingNodesForID(InMemoryGraph incomingGraph, StorageBackend graphStorage) {
-        for (Node node : incomingGraph.nodes()) {
+        for (GunGraphNode node : incomingGraph.nodes()) {
             for(node)
         }
     }*/
