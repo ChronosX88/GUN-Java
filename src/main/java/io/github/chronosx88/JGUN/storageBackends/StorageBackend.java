@@ -13,8 +13,5 @@ public interface StorageBackend {
     boolean hasNode(String soul);
     Set<Map.Entry<String, GunGraphNode>> entries();
     Collection<GunGraphNode> nodes();
-    String toString();
-    String toPrettyString();
-    JSONObject toJSONObject();
     boolean isEmpty();
 }

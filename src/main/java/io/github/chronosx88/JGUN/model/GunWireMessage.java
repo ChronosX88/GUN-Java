@@ -1,9 +1,7 @@
 package io.github.chronosx88.JGUN.model;
 
 import com.google.gson.annotations.SerializedName;
-import io.github.chronosx88.JGUN.GunGraphNode;
-
-import java.util.Map;
+import io.github.chronosx88.JGUN.storageBackends.InMemoryGraph;
 
 public class GunWireMessage {
     /**
@@ -22,13 +20,13 @@ public class GunWireMessage {
      * Info about get request
      */
     @SerializedName("get")
-    public GunGetRequest getRequest;
+    public GunGetData getData;
 
     /**
      * Data for db put
      */
     @SerializedName("put")
-    public Map<String, GunGraphNode> putRequest;
+    public InMemoryGraph putData;
 
     /**
      * Shows the status of the request (is it processed correctly)
@@ -41,4 +39,41 @@ public class GunWireMessage {
      */
     @SerializedName("err")
     public String errorText;
+
+    public GunWireMessage() {}
+
+    /**
+     * Construct new GunWireMessage for put ack
+     * @param id Message ID
+     * @param ackOn ID of the message to which this message replies
+     * @param isOk Shows the status of the request (is it processed correctly)
+     */
+    public GunWireMessage(String id, String ackOn, boolean isOk) {
+        this(id, ackOn);
+        this.isOk = isOk;
+    }
+
+    public GunWireMessage(String id, String ackOn) {
+        this.id = id;
+        this.ackOn = ackOn;
+    }
+
+    /**
+     * Construct new GunWireMessage for get ack
+     * @param id Message ID
+     * @param ackOn ID of the message to which this message replies
+     * @param isOk Shows the status of the request (is it processed correctly)
+     */
+    public GunWireMessage(String id, String ackOn, InMemoryGraph putData, boolean isOk) {
+        this(id, ackOn);
+        this.putData = putData;
+        this.isOk = isOk;
+    }
+
+    public GunWireMessage(String id, String desiredSoul, String desiredField) {
+        this(id, null);
+        this.getData = new GunGetData();
+        this.getData.soul = desiredSoul;
+        this.getData.field = desiredField;
+    }
 }

@@ -1,15 +1,17 @@
 package io.github.chronosx88.JGUN;
 
+import com.google.gson.Gson;
+import io.github.chronosx88.JGUN.di.Dagger;
 import io.github.chronosx88.JGUN.futures.BaseCompletableFuture;
 import io.github.chronosx88.JGUN.futures.FutureGet;
 import io.github.chronosx88.JGUN.futures.FuturePut;
+import io.github.chronosx88.JGUN.model.GunWireMessage;
 import io.github.chronosx88.JGUN.nodes.Peer;
 import io.github.chronosx88.JGUN.storageBackends.InMemoryGraph;
 import io.github.chronosx88.JGUN.storageBackends.StorageBackend;
-import org.java_websocket.client.WebSocketClient;
 import org.json.JSONObject;
 
-import java.util.HashMap;
+import javax.inject.Inject;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -23,8 +25,10 @@ public class Dispatcher {
     private final StorageBackend graphStorage;
     private final Dup dup;
     private final Executor executorService = Executors.newCachedThreadPool();
+    @Inject Gson gson;
 
     public Dispatcher(StorageBackend graphStorage, Peer peer, Dup dup) {
+        Dagger.getMainComponent().inject(this);
         this.graphStorage = graphStorage;
         this.peer = peer;
         this.dup = dup;
@@ -34,52 +38,45 @@ public class Dispatcher {
         pendingFutures.put(future.getFutureID(), future);
     }
 
-    public void handleIncomingMessage(JSONObject message) {
-        if(message.has("put")) {
-            JSONObject ack = handlePut(message);
-            peer.emit(ack.toString());
-        }
-        if(message.has("get")) {
-            JSONObject ack = handleGet(message);
-            peer.emit(ack.toString());
-        }
-        if(message.has("@")) {
+    public void handleIncomingMessage(GunWireMessage message) {
+        if(message.putData != null) {
+            peer.emit(gson.toJson(handlePut(message)));
+        } else if(message.getData != null) {
+            peer.emit(gson.toJson(handleGet(message)));
+        } else if(message.ackOn != null) {
             handleIncomingAck(message);
         }
-        peer.emit(message.toString());
+        peer.emit(gson.toJson(message));
     }
 
-    private JSONObject handleGet(JSONObject getData) {
-        InMemoryGraph getResults = Utils.getRequest(getData.getJSONObject("get"), graphStorage);
-        return new JSONObject() // Acknowledgment
-                .put( "#", dup.track(Dup.random()) )
-                .put( "@", getData.getString("#") )
-                .put( "put", getResults.toJSONObject() )
-                .put( "ok", !(getResults.isEmpty()) );
+    private GunWireMessage handleGet(GunWireMessage message) {
+        InMemoryGraph getResults = Utils.getRequest(message.getData, graphStorage);
+
+        return new GunWireMessage(dup.track(Dup.random()), message.id, getResults, !(getResults.isEmpty()));
     }
 
-    private JSONObject handlePut(JSONObject message) {
-        boolean success = HAM.mix(new InMemoryGraph(message.getJSONObject("put")), graphStorage, changeListeners, forEachListeners);
-        return new JSONObject() // Acknowledgment
-                .put( "#", dup.track(Dup.random()) )
-                .put( "@", message.getString("#") )
-                .put( "ok", success);
+    private GunWireMessage handlePut(GunWireMessage message) {
+        boolean success = HAM.mix(new InMemoryGraph(message.putData), graphStorage, changeListeners, forEachListeners);
+        return new GunWireMessage(
+                dup.track((Dup.random())),
+                message.id,
+                success);
     }
 
-    private void handleIncomingAck(JSONObject ack) {
-        if(ack.has("put")) {
-            if(pendingFutures.containsKey(ack.getString("@"))) {
-                BaseCompletableFuture<?> future = pendingFutures.get(ack.getString("@"));
+    private void handleIncomingAck(GunWireMessage msg) {
+        if(msg.putData != null) {
+            if(pendingFutures.containsKey(msg.ackOn)) {
+                BaseCompletableFuture<?> future = pendingFutures.get(msg.ackOn);
                 if(future instanceof FutureGet) {
-                    ((FutureGet) future).complete(new InMemoryGraph(ack.getJSONObject("put")).toUserJSONObject());
+                    ((FutureGet) future).complete(msg.putData.toUserJSONObject());
                 }
             }
         }
-        if(ack.has("ok")) {
-            if(pendingFutures.containsKey(ack.getString("@"))) {
-                BaseCompletableFuture<?> future = pendingFutures.get(ack.getString("@"));
+        if(msg.getData != null) {
+            if(pendingFutures.containsKey(msg.ackOn)) {
+                BaseCompletableFuture<?> future = pendingFutures.get(msg.ackOn);
                 if(future instanceof FuturePut) {
-                    ((FuturePut) future).complete(ack.getBoolean("ok"));
+                    ((FuturePut) future).complete(msg.isOk);
                 }
             }
         }
@@ -87,15 +84,15 @@ public class Dispatcher {
 
     public void sendPutRequest(String messageID, JSONObject data) {
         executorService.execute(() -> {
-            InMemoryGraph graph = Utils.prepareDataForPut(data);
-            peer.emit(Utils.formatPutRequest(messageID, graph.toJSONObject()).toString());
+            /*InMemoryGraph graph = Utils.prepareDataForPut(data);
+            peer.emit(Utils.formatPutRequest(messageID, graph.toJSONObject()).toString());*/ // TODO
         });
     }
 
-    public void sendGetRequest(String messageID, String key, String field) {
+    public void sendGetRequest(String messageID, String soul, String field) {
         executorService.execute(() -> {
-            JSONObject jsonGet = Utils.formatGetRequest(messageID, key, field);
-            peer.emit(jsonGet.toString());
+            GunWireMessage message = new GunWireMessage(messageID, soul, field);
+            peer.emit(gson.toJson(message));
         });
     }
 
