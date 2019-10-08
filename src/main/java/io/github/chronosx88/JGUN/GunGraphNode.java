@@ -10,35 +10,26 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class GunGraphNode implements Comparable<GunGraphNode>, Serializable {
-    @SerializedName(">")
-    @Expose(serialize = false)
-    public Map<String, Long> states; // Metadata of the node for diff
-
-    @SerializedName("#")
-    @Expose(serialize = false)
-    public String soul; // i.e. ID of node
+    @SerializedName("_")
+    public GunNodeMetadata nodeMetadata;
 
     public Map<String, Object> values; // Data
 
     public GunGraphNode() {}
 
-    public GunGraphNode(JsonObject jsonObject) {
-        soul = jsonObject.getAsJsonObject("_").get("#").getAsString();
-        states = new LinkedHashMap<>();
-        for(Map.Entry<String, JsonElement> entry : jsonObject.getAsJsonObject("_").get(">").getAsJsonObject().entrySet()) {
-            states.put(entry.getKey(), entry.getValue().getAsLong());
-        }
+    public GunGraphNode(GunGraphNode node) {
+        this.nodeMetadata = node.nodeMetadata;
+        this.values = node.values;
     }
 
     public GunGraphNode(Map<String, Long> states, String soul, Map<String, Object> values) {
-        this.states = states;
-        this.soul = soul;
+        this.nodeMetadata = new GunNodeMetadata(states, soul);
         this.values = values;
     }
 
     @Override
     public int compareTo(GunGraphNode other) {
-        return soul.compareTo(other.soul);
+        return nodeMetadata.soul.compareTo(other.nodeMetadata.soul);
     }
 
     @Override
@@ -46,7 +37,7 @@ public class GunGraphNode implements Comparable<GunGraphNode>, Serializable {
         if (other == null)
             return false;
         if (other instanceof String)
-            return soul.equals(other);
+            return nodeMetadata.soul.equals(other);
         if (other instanceof GunGraphNode)
             return compareTo((GunGraphNode) other) == 0;
         return false;
@@ -54,6 +45,6 @@ public class GunGraphNode implements Comparable<GunGraphNode>, Serializable {
 
     @Override
     public int hashCode() {
-        return soul.hashCode();
+        return nodeMetadata.soul.hashCode();
     }
 }
