@@ -8,17 +8,17 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class InMemoryGraph implements StorageBackend {
+public class MemoryGraph implements StorageBackend {
 
     private final Map<String, GunGraphNode> nodes = new LinkedHashMap<>();
 
-    public InMemoryGraph(InMemoryGraph source) {
+    public MemoryGraph(MemoryGraph source) {
         for (Map.Entry<String, GunGraphNode> entry : source.entries()) {
             nodes.put(entry.getKey(), new GunGraphNode(entry.getValue()));
         }
     }
 
-    public InMemoryGraph() {}
+    public MemoryGraph() {}
 
     public GunGraphNode getNode(String soul) {
         return nodes.get(soul);

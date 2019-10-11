@@ -1,7 +1,7 @@
 package io.github.chronosx88.JGUN.model;
 
 import com.google.gson.annotations.SerializedName;
-import io.github.chronosx88.JGUN.storageBackends.InMemoryGraph;
+import io.github.chronosx88.JGUN.storageBackends.MemoryGraph;
 
 public class GunWireMessage {
     /**
@@ -26,7 +26,7 @@ public class GunWireMessage {
      * Data for db put
      */
     @SerializedName("put")
-    public InMemoryGraph putData;
+    public MemoryGraph putData;
 
     /**
      * Shows the status of the request (is it processed correctly)
@@ -64,7 +64,7 @@ public class GunWireMessage {
      * @param ackOn ID of the message to which this message replies
      * @param isOk Shows the status of the request (is it processed correctly)
      */
-    public GunWireMessage(String id, String ackOn, InMemoryGraph putData, boolean isOk) {
+    public GunWireMessage(String id, String ackOn, MemoryGraph putData, boolean isOk) {
         this(id, ackOn);
         this.putData = putData;
         this.isOk = isOk;

@@ -1,11 +1,13 @@
 package io.github.chronosx88.JGUN;
 
-import io.github.chronosx88.JGUN.storageBackends.InMemoryGraph;
+import io.github.chronosx88.JGUN.model.GunGetData;
+import io.github.chronosx88.JGUN.storageBackends.MemoryGraph;
 import io.github.chronosx88.JGUN.storageBackends.StorageBackend;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 public class Utils {
@@ -23,42 +25,33 @@ public class Utils {
         return thread;
     }
 
-    public static GunGraphNode newNode(String soul, JSONObject data) {
-        JSONObject states = new JSONObject();
-        for (String key : data.keySet()) {
-            states.put(key, System.currentTimeMillis());
-        }
-        data.put("_", new JSONObject().put("#", soul).put(">", states));
-        return new GunGraphNode(data);
-    }
-
-    public static InMemoryGraph getRequest(JSONObject lex, StorageBackend graph) {
-        String soul = lex.getString("#");
-        String key = lex.optString(".", null);
+    public static MemoryGraph getRequest(GunGetData getData, StorageBackend graph) {
+        String soul = getData.soul;
+        String field = getData.field;
         GunGraphNode node = graph.getNode(soul);
         Object tmp;
         if(node == null) {
-            return new InMemoryGraph();
+            return new MemoryGraph();
         }
-        if(key != null) {
-            tmp = node.values.opt(key);
+        if(field != null) {
+            tmp = node.values.get(field);
             if(tmp == null) {
-                return new InMemoryGraph();
+                return new MemoryGraph();
             }
-            GunGraphNode node1 = new GunGraphNode(node.toJSONObject());
-            node = Utils.newNode(node.soul, new JSONObject());
-            node.setMetadata(node1.getMetadata());
-            node.values.put(key, tmp);
-            JSONObject tmpStates = node1.states;
-            node.states.put(key, tmpStates.get(key));
+            GunGraphNode node1 = new GunGraphNode(node);
+            node = new GunGraphNode();
+            node.nodeMetadata = node1.nodeMetadata;
+            node.values.put(field, tmp);
+            Map<String, Long> tmpStates = node1.nodeMetadata.states;
+            node.nodeMetadata.states.put(field, tmpStates.get(field));
         }
-        InMemoryGraph ack = new InMemoryGraph();
+        MemoryGraph ack = new MemoryGraph();
         ack.addNode(soul, node);
         return ack;
     }
 
-    public static InMemoryGraph prepareDataForPut(JSONObject data) {
-        InMemoryGraph result = new InMemoryGraph();
+    public static MemoryGraph prepareDataForPut(JSONObject data) {
+        MemoryGraph result = new MemoryGraph();
         for (String objectKey : data.keySet()) {
             Object object = data.get(objectKey);
             if(object instanceof JSONObject) {
@@ -71,7 +64,7 @@ public class Utils {
         return result;
     }
 
-    private static void prepareNodeForPut(GunGraphNode node, InMemoryGraph result, ArrayList<String> path) {
+    private static void prepareNodeForPut(GunGraphNode node, MemoryGraph result, ArrayList<String> path) {
         for(String key : new ConcurrentSkipListSet<>(node.values.keySet())) {
             Object value = node.values.get(key);
             if(value instanceof JSONObject) {
@@ -115,7 +108,7 @@ public class Utils {
      * @param graphStorage Graph storage in which the incoming graph will be saved
      * @return Prepared graph for saving
      */
-    /*public static InMemoryGraph checkIncomingNodesForID(InMemoryGraph incomingGraph, StorageBackend graphStorage) {
+    /*public static MemoryGraph checkIncomingNodesForID(MemoryGraph incomingGraph, StorageBackend graphStorage) {
         for (GunGraphNode node : incomingGraph.nodes()) {
             for(node)
         }

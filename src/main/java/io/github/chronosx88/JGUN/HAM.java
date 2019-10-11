@@ -1,6 +1,6 @@
 package io.github.chronosx88.JGUN;
 
-import io.github.chronosx88.JGUN.storageBackends.InMemoryGraph;
+import io.github.chronosx88.JGUN.storageBackends.MemoryGraph;
 import io.github.chronosx88.JGUN.storageBackends.StorageBackend;
 import org.json.JSONObject;
 
@@ -55,9 +55,9 @@ public class HAM {
         throw new IllegalArgumentException("Invalid CRDT Data: "+ incomingValue +" to "+ currentValue +" at "+ incomingState +" to "+ currentState +"!");
     }
 
-    public static boolean mix(InMemoryGraph change, StorageBackend data, Map<String, NodeChangeListener> changeListeners, Map<String, NodeChangeListener.ForEach> forEachListeners) {
+    public static boolean mix(MemoryGraph change, StorageBackend data, Map<String, NodeChangeListener> changeListeners, Map<String, NodeChangeListener.ForEach> forEachListeners) {
         long machine = System.currentTimeMillis();
-        InMemoryGraph diff = null;
+        MemoryGraph diff = null;
         for(Map.Entry<String, GunGraphNode> entry : change.entries()) {
             GunGraphNode node = entry.getValue();
             for(String key : node.values.keySet()) {
@@ -67,7 +67,7 @@ public class HAM {
                 long was = -1;
                 Object known = null;
                 if(data == null) {
-                    data = new InMemoryGraph();
+                    data = new MemoryGraph();
                 }
                 if(data.hasNode(node.soul)) {
                     if(data.getNode(node.soul).states.get(key) != null) {
@@ -95,7 +95,7 @@ public class HAM {
                 }
 
                 if(diff == null) {
-                    diff = new InMemoryGraph();
+                    diff = new MemoryGraph();
                 }
 
                 if(!diff.hasNode(node.soul)) {
@@ -131,7 +131,7 @@ public class HAM {
 
     public static boolean mix(GunGraphNode incomingNode, StorageBackend data, Map<String, NodeChangeListener> changeListeners, Map<String, NodeChangeListener.ForEach> forEachListeners) {
         long machine = System.currentTimeMillis();
-        InMemoryGraph diff = null;
+        MemoryGraph diff = null;
 
         for(String key : incomingNode.values.keySet()) {
             Object value = incomingNode.values.get(key);
@@ -140,7 +140,7 @@ public class HAM {
             long was = -1;
             Object known = null;
             if(data == null) {
-                data = new InMemoryGraph();
+                data = new MemoryGraph();
             }
             if(data.hasNode(incomingNode.soul)) {
                 /*if(data.getNode(incomingNode.soul).states.opt(key) != null) {
@@ -162,7 +162,7 @@ public class HAM {
             }*/ // TODO
 
             if(diff == null) {
-                diff = new InMemoryGraph();
+                diff = new MemoryGraph();
             }
 
             if(!diff.hasNode(incomingNode.soul)) {

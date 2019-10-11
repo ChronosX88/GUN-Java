@@ -7,7 +7,7 @@ import io.github.chronosx88.JGUN.futures.FutureGet;
 import io.github.chronosx88.JGUN.futures.FuturePut;
 import io.github.chronosx88.JGUN.model.GunWireMessage;
 import io.github.chronosx88.JGUN.nodes.Peer;
-import io.github.chronosx88.JGUN.storageBackends.InMemoryGraph;
+import io.github.chronosx88.JGUN.storageBackends.MemoryGraph;
 import io.github.chronosx88.JGUN.storageBackends.StorageBackend;
 import org.json.JSONObject;
 
@@ -50,13 +50,13 @@ public class Dispatcher {
     }
 
     private GunWireMessage handleGet(GunWireMessage message) {
-        InMemoryGraph getResults = Utils.getRequest(message.getData, graphStorage);
+        MemoryGraph getResults = Utils.getRequest(message.getData, graphStorage);
 
         return new GunWireMessage(dup.track(Dup.random()), message.id, getResults, !(getResults.isEmpty()));
     }
 
     private GunWireMessage handlePut(GunWireMessage message) {
-        boolean success = HAM.mix(new InMemoryGraph(message.putData), graphStorage, changeListeners, forEachListeners);
+        boolean success = HAM.mix(new MemoryGraph(message.putData), graphStorage, changeListeners, forEachListeners);
         return new GunWireMessage(
                 dup.track((Dup.random())),
                 message.id,
@@ -84,7 +84,7 @@ public class Dispatcher {
 
     public void sendPutRequest(String messageID, JSONObject data) {
         executorService.execute(() -> {
-            /*InMemoryGraph graph = Utils.prepareDataForPut(data);
+            /*MemoryGraph graph = Utils.prepareDataForPut(data);
             peer.emit(Utils.formatPutRequest(messageID, graph.toJSONObject()).toString());*/ // TODO
         });
     }

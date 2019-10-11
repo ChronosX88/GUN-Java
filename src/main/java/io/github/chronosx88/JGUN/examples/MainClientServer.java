@@ -1,10 +1,8 @@
 package io.github.chronosx88.JGUN.examples;
 
 import io.github.chronosx88.JGUN.Gun;
-import io.github.chronosx88.JGUN.futures.FutureGet;
-import io.github.chronosx88.JGUN.futures.FuturePut;
 import io.github.chronosx88.JGUN.nodes.GunSuperPeer;
-import io.github.chronosx88.JGUN.storageBackends.InMemoryGraph;
+import io.github.chronosx88.JGUN.storageBackends.MemoryGraph;
 import org.json.JSONObject;
 
 import java.net.Inet4Address;
@@ -14,12 +12,12 @@ import java.util.concurrent.Executors;
 
 public class MainClientServer {
     public static void main(String[] args) {
-        GunSuperPeer gunSuperNode = new GunSuperPeer(21334, new InMemoryGraph());
+        GunSuperPeer gunSuperNode = new GunSuperPeer(21334, new MemoryGraph());
         gunSuperNode.start();
         Runnable task = () -> {
             Gun gun = null;
             try {
-                gun = new Gun(Inet4Address.getByAddress(new byte[]{127, 0, 0, 1}), 21334, new InMemoryGraph());
+                gun = new Gun(Inet4Address.getByAddress(new byte[]{127, 0, 0, 1}), 21334, new MemoryGraph());
             } catch (UnknownHostException e) {
                 e.printStackTrace();
             }
